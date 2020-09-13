@@ -2,34 +2,73 @@
 
 #strip out all content inside html tags<>
 
-from ply import lex
+from lex import lex
 import re
 
 class HTMLLexer(object):
 
+    states = (
+        ('tag', 'inclusive'),
+        ('meta', 'inclusive'),
+        ('content', 'inclusive'),
+    )
+
     tokens = (
-        'TAG',
+        'tag_END',
+        'tag_META',
+        'tag_NONTEXT',
+        'meta_CONTENT',
+        'content_END',
         'TEXT_TAG',
+        'META',
         'FLOAT',
         'TIME',
-        'HYPENATED',
+        'HYPHENATED',
         'ABBREVIATED',
         'WORD',
         'WHITESPACE',
         'PUNCTUATION',
     )
 
+    def t_tag(self, t):
+        r'<'
+        t.lexer.tag_start = t.lexer.lexpos
+        t.lexer.begin('tag')
 
-    def t_TAG(self, t):
-        r'\s*<[^>]*>\s*'
-        pass
+    def t_tag_END(self, t):
+        r'>'
+        t.lexer.begin('INITIAL')
+
+    def t_tag_META(self, t):
+        r"meta"
+        t.value = "This is a meta tag"
+        t.lexer.begin("meta")
+        return t
+
+    def t_tag_NONTEXT(self, t):
+        r'kdkdkdkd'
+        return t
+
+    def t_meta_CONTENT(self, t):
+        r"content\s*=\s*\""
+        t.lexer.content_start = t.lexer.lexpos
+        t.lexer.begin("content")
+        return t
+
+    def t_content_END(self, t):
+        r"\""
+        t.value = t.lexer.lexdata[t.lexer.content_start:t.lexer.lexpos+1]
+        t.lexer.begin("meta")
+        return t
 
     def t_TEXT_TAG(self, t):
         r'(\w*<[^>]*>\w*)+'
         t.value = re.sub("<[^>]*>", "", t.value)
         return t
 
-    def t_HYPENATED(self, t):
+
+
+    def t_HYPHENATED(self, t):
         r"(\w+-\w+)+"
         t.value = re.sub("-*", "", t.value)
         return t
@@ -72,8 +111,8 @@ class HTMLLexer(object):
         t.lexer.skip(1)
 
     # Build the lexer
-    def build(self,**kwargs):
-        self.lexer = lex.lex(module=self, **kwargs)
+    def build(self, **kwargs):
+        self.lexer = lex(module=self, **kwargs)
         self.frequency = {}
 
     def updateFrequency(self, freq):
@@ -87,15 +126,14 @@ class HTMLLexer(object):
 
         tokens = []
 
-        with open(inputFile,'rb') as f:
-            for line in f:
-                line = line.decode(errors='ignore')
-                self.lexer.input(line)
-                while True:
-                    tok = self.lexer.token()
-                    if not tok:
-                        break
-                    tokens.append(tok.value)
+        with open(inputFile,'r') as f:
+            data = f.read()
+            self.lexer.input(data)
+            while True:
+                tok = self.lexer.token()
+                if not tok:
+                    break
+                tokens.append(tok.value)
 
         with open(outputFile, 'w') as f:
             for x in tokens:

@@ -14,7 +14,7 @@ if __name__ == "__main__":
     m.build()
 
     m.test(" <html>\n <head><title>Another test file</title></head>\n <body> ")
-    directory = os.path.join(os.getcwd(), "files")
+    directory = os.path.join(os.getcwd(), "testfiles")
     files = os.listdir(directory)
 
 

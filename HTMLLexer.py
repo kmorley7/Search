@@ -1,108 +1,77 @@
-#Rules for our tokenizer
-
-#strip out all content inside html tags<>
-
 from lex import lex
 import re
 
 class HTMLLexer(object):
 
-    states = (
-        ('tag', 'inclusive'),
-        ('meta', 'inclusive'),
-        ('content', 'inclusive'),
-    )
-
     tokens = (
-        'tag_END',
-        'tag_META',
-        'tag_NONTEXT',
-        'meta_CONTENT',
-        'content_END',
+        'TAG',
         'TEXT_TAG',
-        'META',
         'FLOAT',
         'TIME',
-        'HYPHENATED',
+        'COMMA_NUMBER',
+        'HYPENATED',
         'ABBREVIATED',
         'WORD',
         'WHITESPACE',
         'PUNCTUATION',
     )
 
-    def t_tag(self, t):
-        r'<'
-        t.lexer.tag_start = t.lexer.lexpos
-        t.lexer.begin('tag')
+    #rule for html tags
+    def t_TAG(self, t):
+        r'\s*<[^>]*>\s*'
+        pass
 
-    def t_tag_END(self, t):
-        r'>'
-        t.lexer.begin('INITIAL')
-
-    def t_tag_META(self, t):
-        r"meta"
-        t.value = "This is a meta tag"
-        t.lexer.begin("meta")
-        return t
-
-    def t_tag_NONTEXT(self, t):
-        r'kdkdkdkd'
-        return t
-
-    def t_meta_CONTENT(self, t):
-        r"content\s*=\s*\""
-        t.lexer.content_start = t.lexer.lexpos
-        t.lexer.begin("content")
-        return t
-
-    def t_content_END(self, t):
-        r"\""
-        t.value = t.lexer.lexdata[t.lexer.content_start:t.lexer.lexpos+1]
-        t.lexer.begin("meta")
-        return t
-
+    #When a HTML tag is in the middle of a word, such as a <b> tag
     def t_TEXT_TAG(self, t):
-        r'(\w*<[^>]*>\w*)+'
+        r'(\w+(<[^>]*>)+\w+)+'
         t.value = re.sub("<[^>]*>", "", t.value)
+        t.value = str(t.value).lower()
         return t
 
-
-
-    def t_HYPHENATED(self, t):
-        r"(\w+-\w+)+"
+    #for hypenated words
+    def t_HYPENATED(self, t):
+        r"(\w+-\w+)(-\w+)*"
         t.value = re.sub("-*", "", t.value)
+        t.value = str(t.value).lower()
         return t
 
+    #rule for floats, we ignore everything in the decimal place
     def t_FLOAT(self, t):
         r"[-+]?\d*\.\d+"
         t.value = str(abs(int(float(t.value))))
         return t
 
-    def t_TIME(self, t):
-        r"\w+:\w+"
-        t.value = re.sub(":*", "", t.value)
+    #numbers which have commas in them, we just remove the comma
+    def t_COMMA_NUMBER(self, t):
+        r"(\d*,\d+)+"
+        t.value = re.sub(",", "", t.value)
         return t
 
+    #numbers that have a colon in them
+    def t_TIME(self, t):
+        r"\w+:\w+"
+        t.value = re.sub(":", "", t.value)
+        return t
 
-    #words are consisting of only characters
-    #we convert the word to all lowercase
+    #This rule catches abbreviations as well as websites urls
+    def t_ABBREVIATED(self, t):
+        r"(\w+\.\w+)(\.\w+)*"
+        t.value = re.sub("\.", "", t.value)
+        t.value = str(t.value).lower()
+        return t
+
+    #Every string of alphanumeric characters that does not have a rule yet
     def t_WORD(self, t):
         r'\w+'
         t.value = str(t.value).lower()
         return t
 
+    def t_PUNCTUATION(self, t):
+        r'[!"#$%&\'\(\)\*\+,-./:;<=>?@\[\]^_`{|}~\\/]'
+        pass
 
     def t_WHITESPACE(self, t):
         r'\s+'
-        pass
-
-    def t_ABBREVIATED(self, t):
-        r"(\w+.\w+)+"
-        t.value = re.sub(".", "", t.value)
-        return t
-
-    def t_PUNCTUATION(self, t):
-        r'[!"#$%&\'\(\)\*\+,-./:;<=>?@\[\]^_`{|}~\\]'
         pass
 
     # Error handling rule
@@ -111,10 +80,11 @@ class HTMLLexer(object):
         t.lexer.skip(1)
 
     # Build the lexer
-    def build(self, **kwargs):
+    def build(self,**kwargs):
         self.lexer = lex(module=self, **kwargs)
         self.frequency = {}
 
+    #after one file counts the frequency of words in the file, it calls this function to update the running total of token frequencies
     def updateFrequency(self, freq):
         for key in freq:
             if key in self.frequency:
@@ -122,23 +92,21 @@ class HTMLLexer(object):
             else:
                 self.frequency[key] = freq[key]
 
-    def tokenizeFile(self, inputFile, outputFile):
+    #opens inputFile, tokenizes it, then writes the tokens to outputFile. updates the frequency count of tokens
+    def tokenizeFile(self, inputFile):
 
         tokens = []
 
-        with open(inputFile,'r') as f:
-            data = f.read()
-            self.lexer.input(data)
-            while True:
-                tok = self.lexer.token()
-                if not tok:
-                    break
-                tokens.append(tok.value)
-
-        with open(outputFile, 'w') as f:
-            for x in tokens:
-                f.write("%s\n" % x)
-
+        #read the file and tokenize
+        with open(inputFile,'rb') as f:
+            for line in f:
+                line = line.decode(errors='ignore')
+                self.lexer.input(line)
+                while True:
+                    tok = self.lexer.token()
+                    if not tok:
+                        break
+                    tokens.append(tok.value)
 
         #Count the frequency of tokens for this file
         freq = {}
@@ -148,19 +116,23 @@ class HTMLLexer(object):
             else:
                 freq[x] = 1
 
+        #update the global count of token frequencies
         self.updateFrequency(freq)
 
+        return freq
+
+    #create the files with tokens sorted by frequency and also alphabetically
     def finish(self):
 
         with open("sorted.txt", "w") as f:
             for w in sorted(self.frequency):
-                f.write("%s\n" % w)
+                f.write("%s %d\n" % (w, self.frequency[w]))
 
         with open("frequency.txt", "w") as f:
             for w in sorted(self.frequency, key=self.frequency.get, reverse=True):
                 f.write("%s %d\n" % (w, self.frequency[w]))
 
-    # Test it output
+    #Test function that is from the ply examples
     def test(self,data):
         self.lexer.input(data)
         while True:

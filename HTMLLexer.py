@@ -1,4 +1,4 @@
-from lex import lex
+import lex
 import re
 
 class HTMLLexer(object):
@@ -81,7 +81,7 @@ class HTMLLexer(object):
 
     # Build the lexer
     def build(self,**kwargs):
-        self.lexer = lex(module=self, **kwargs)
+        self.lexer = lex.lex(module=self, **kwargs)
         self.frequency = {}
 
     #after one file counts the frequency of words in the file, it calls this function to update the running total of token frequencies

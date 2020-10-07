@@ -51,7 +51,7 @@ def main(inputDir, outputDir):
         for w in mappings:
             f.write("{} {}\n".format(w[0], w[1]))
 
-    print(elapsed_time[-1])
+    print("Ran in {} seconds.".format(elapsed_time[-1]))
 
 
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     main(inputDir, outputDir)
 
-    search("theme", outputDir)
+    search("watchdog", outputDir)
 
 
 

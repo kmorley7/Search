@@ -109,6 +109,7 @@ class HTMLLexer(object):
                     tokens.append(tok.value)
 
         #Count the frequency of tokens for this file
+        count = len(tokens)
         freq = {}
         for x in tokens:
             if (x in freq):
@@ -119,7 +120,7 @@ class HTMLLexer(object):
         #update the global count of token frequencies
         self.updateFrequency(freq)
 
-        return freq
+        return freq, count
 
     #create the files with tokens sorted by frequency and also alphabetically
     def finish(self):

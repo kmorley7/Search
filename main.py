@@ -16,8 +16,6 @@ def main(inputDir, outputDir):
     elapsed_time = []
     start = time.time()
 
-    #we use a list to build the mapping file
-    mappings = []
 
     #Loop over all files in the given directory
     for file in files:
@@ -25,46 +23,42 @@ def main(inputDir, outputDir):
             inputFile = os.path.join(inputDir,file)
 
             m.parse(inputFile) #the tokenization happens inside this function
-
-            mappings.append((m.doc_num, inputFile))
+            m.mappings.append((m.doc_num, inputFile))
 
             end = time.time()
             elapsed_time.append(end - start)
 
-    #write out all the output files
-    dict_file = {}
-    with open(os.path.join(outputDir, "postings.txt"), "w") as f:
-        for w in m.index:
-            #count the number of entries and get the offset of the inverted index file we are writing to
-            num_docs = len(m.index[w])
-            offset = f.tell()
-            dict_file[w] = (num_docs, offset)
-            for x in m.index[w]:
-                f.write("{} {}\n".format(x[0], x[1]))
 
-    with open(os.path.join(outputDir, "dictionary.txt"), "w") as f:
-        for w in sorted(dict_file):
-            f.write("{}, {}, {}\n".format(w, dict_file[w][0], dict_file[w][1]))
-
-    #write out the mappings file
-    with open( os.path.join(outputDir, "mappings.txt"), "w") as f:
-        for w in mappings:
-            f.write("{} {}\n".format(w[0], w[1]))
-
+    m.writeFiles(outputDir, N=len(m.mappings))
     print("Ran in {} seconds.".format(elapsed_time[-1]))
 
 
 
 def search(token, outputDir):
+
+
     num_files = 0
     offset = 0
+
     with open(os.path.join(outputDir, "dictionary.txt"), "rt") as f:
         reader = csv.reader(f, delimiter=",")
-        for row in reader:
-            if token == row[0]:
-                num_files = int(row[1])
-                offset = int(row[2])
-                print(row)
+
+        read = False
+        i = 0
+        while not read and i < 38000:
+            h = self.hash(token, i) * self.line_length
+            f.seek(h)
+            line = f.readline()
+            if line[0:12] == "{:12.12}".format(token):
+                return line.split()
+            else:
+                i = i+1
+
+        if not read:
+            print("Record not found")
+
+
+
 
     docs = []
     if num_files != 0:
@@ -101,7 +95,9 @@ if __name__ == "__main__":
 
     main(inputDir, outputDir)
 
-    search("watchdog", outputDir)
+
+
+
 
 
 

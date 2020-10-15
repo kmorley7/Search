@@ -1,4 +1,6 @@
 from HTMLLexer import HTMLLexer
+from DictionaryBuilder import DictionaryBuilder
+import os
 
 class Indexer:
 
@@ -13,30 +15,36 @@ class Indexer:
     def __init__(self):
         self.index = self.InvertedIndex()
         self.doc_num = 0
+        self.mappings = []
         self.lexer = HTMLLexer()
         self.lexer.build()
 
     def parse(self, doc):
         self.doc_num = self.doc_num + 1
-        tokens = self.lexer.tokenizeFile(doc)
+        tokens, count = self.lexer.tokenizeFile(doc)
+
 
         for x in tokens.keys():
-            self.index.addToIndex(x, (self.doc_num, tokens[x]))
+            norm_tf = tokens[x]/count
+            self.index.addToIndex(x, (self.doc_num, norm_tf))
 
+    def writeFiles(self, outputDir, N):
 
-    def finish(self):
+        dictionaryBuilder = DictionaryBuilder(len(self.index))
 
-        #here is where i should make the dict file: term, num docs, start
-        dict_file = {}
-        with open("postings.txt", "w") as f:
+        with open(os.path.join(outputDir, "postings.txt"), "w") as f:
             for w in self.index:
-                #count the number of entries and get the line number of the inverted index file we are writing to
+                #count the number of entries and get the offset of the inverted index file we are writing to
                 num_docs = len(self.index[w])
+                idf = N / num_docs
                 offset = f.tell()
-                dict_file[w] = (num_docs, offset)
+                dictionaryBuilder.insert((w, num_docs, offset))
                 for x in self.index[w]:
-                    f.write("{} {}\n".format(x[0], x[1]))
+                    f.write("{:3d} {:8.8}\n".format(x[0], str(x[1] * idf)))
 
-        with open("dictionary.txt", "w") as f:
-            for w in sorted(dict_file):
-                f.write("{}, {}, {}\n".format(w, dict_file[w][0], dict_file[w][1]))
+        dictionaryBuilder.writeFile(filepath=os.path.join(outputDir, "dictionary.txt"))
+
+        #write out the mappings file
+        with open( os.path.join(outputDir, "mappings.txt"), "w") as f:
+            for w in self.mappings:
+                f.write("{:3.3} {:64.64}\n".format(str(w[0]), str(w[1])))

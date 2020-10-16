@@ -5,12 +5,22 @@ class DictionaryBuilder:
         self.size = int(size * 1.3)
         self.dictionary = {}
         self.line_length = 26
-
+        self.threshold = 2
+        self.stopwords = {}
 
     def hash(self, token, i=0):
         return (hash(token) + i) % self.size
 
     def insert(self, value):
+        #filter out words with low frequencies
+        if value[1] < self.threshold:
+            return
+
+        '''
+        if value[1] > 100:
+            self.stopwords[value[1]] = value[0]
+        '''
+
         write = False
         i = 0
         while not write and i < self.size:
@@ -40,6 +50,9 @@ class DictionaryBuilder:
             if not read:
                 print("Record not found")
 
+    def getStopwords(self):
+        for w in sorted(self.stopwords, reverse=True):
+            print(w, self.stopwords[w])
 
 
 

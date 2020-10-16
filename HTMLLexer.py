@@ -106,6 +106,10 @@ class HTMLLexer(object):
                     tok = self.lexer.token()
                     if not tok:
                         break
+                    #remove tokens of length 1
+                    elif len(tok.value) == 1:
+                        break
+
                     tokens.append(tok.value)
 
         #Count the frequency of tokens for this file

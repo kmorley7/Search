@@ -1,5 +1,5 @@
 from HTMLLexer import HTMLLexer
-from DictionaryBuilder import DictionaryBuilder
+from DictionaryHandler import DictionaryHandler
 from Stopwords import Stopwords
 import os
 
@@ -34,7 +34,8 @@ class Indexer:
 
     def writeFiles(self, outputDir, N):
 
-        dictionaryBuilder = DictionaryBuilder(len(self.index))
+        dictionaryBuilder = DictionaryHandler()
+        dictionaryBuilder.build(len(self.index))
 
         with open(os.path.join(outputDir, "postings.txt"), "w") as f:
             for w in self.index:
@@ -47,10 +48,11 @@ class Indexer:
                 for x in self.index[w]:
                     f.write("{:3d} {:8.8}\n".format(x[0], str(x[1] * idf)))
 
-                    if w=="algorithm" and x[0]==624:
-                        print("{:3d} {:8.8}\n".format(x[0], str(x[1] * idf)))
+                    #if w=="algorithm" and x[0]==624:
+                        #print("{:3d} {:8.8}\n".format(x[0], str(x[1] * idf)))
 
         dictionaryBuilder.writeFile(filepath=os.path.join(outputDir, "dictionary.txt"))
+        dictionaryBuilder.getStopwords()
 
         #write out the mappings file
         with open( os.path.join(outputDir, "mappings.txt"), "w") as f:

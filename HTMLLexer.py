@@ -138,10 +138,17 @@ class HTMLLexer(object):
                 f.write("%s %d\n" % (w, self.frequency[w]))
 
     #Test function that is from the ply examples
-    def test(self,data):
+    def tokenize(self,data):
+        tokens = []
         self.lexer.input(data)
         while True:
             tok = self.lexer.token()
             if not tok:
                 break
-            print(tok)
+            #remove tokens of length 1
+            elif len(tok.value) == 1:
+                break
+
+            tokens.append(tok.value)
+
+        return tokens

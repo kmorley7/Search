@@ -1,12 +1,23 @@
 
-class DictionaryBuilder:
+class DictionaryHandler:
 
-    def __init__(self, size):
-        self.size = int(size * 1.3)
-        self.dictionary = {}
+    def __init__(self):
         self.line_length = 26
         self.threshold = 2
         self.stopwords = {}
+
+    def build(self, size):
+        self.size = int(size * 1.1)
+        self.dictionary = {}
+
+
+    def openFile(self, filepath):
+        self.filepath = filepath
+
+        #determine the number of entries in the dictionary file
+        with open(filepath, "r+") as f:
+            f.seek(0,2)
+            self.size = int(f.tell() / self.line_length)
 
     def hash(self, token, i=0):
         return (hash(token) + i) % self.size
@@ -16,11 +27,12 @@ class DictionaryBuilder:
         if value[1] < self.threshold:
             return
 
-        '''
-        if value[1] > 100:
-            self.stopwords[value[1]] = value[0]
+        ''' This block can be uncommented to obtain the stopwords, and calling getStopWords() after writing the dictionary
+            if value[1] > 300:
+                self.stopwords[value[1]] = value[0]
         '''
 
+        #insert into the hash table
         write = False
         i = 0
         while not write and i < self.size:
@@ -34,8 +46,8 @@ class DictionaryBuilder:
         if not write:
             print("Dictionary is full")
 
-    def get(self, token, filepath):
-        with open(filepath, "r+") as f:
+    def getPosting(self, token):
+        with open(self.filepath, "r+") as f:
             read = False
             i = 0
             while not read and i < self.size:
@@ -43,17 +55,20 @@ class DictionaryBuilder:
                 f.seek(h)
                 line = f.readline()
                 if line[0:12] == "{:12.12}".format(token):
-                    return line.split()
+                    posting = line.split()
+                    return posting[0], int(posting[1]), int(posting[2])
                 else:
                     i = i+1
 
             if not read:
                 print("Record not found")
 
+    '''
+    Method used to obtain the most frequent words in our dictionary
+    '''
     def getStopwords(self):
         for w in sorted(self.stopwords, reverse=True):
-            print(w, self.stopwords[w])
-
+            print("\"{}\", ".format(self.stopwords[w]))
 
 
     def writeFile(self, filepath):

@@ -40,9 +40,11 @@ if __name__ == "__main__":
 
     # Sort the accumulator
     results = []
+    weights = []
     for i in sorted(accumulator, key =accumulator.get, reverse=True):
         if accumulator[i] > 0:
             results.append(i)
+            weights.append(accumulator[i])
 
     # display the top 10 documents
     with open("output/mappings.txt", "r") as f:
@@ -52,7 +54,8 @@ if __name__ == "__main__":
 
             file_number = results[i]
             f.seek((file_number-1)*69)
-            print("{}: {}".format(i+1 ,f.readline()[4:68]))
+            print("{}: {} {} {}".format(i+1, results[i], f.readline()[4:68].strip(), weights[i]))
+
 
     end = time.time()
     print("Ran in {:f} seconds.".format(end-start))

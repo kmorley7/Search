@@ -41,20 +41,24 @@ class Indexer:
             for w in self.index:
                 #count the number of entries and get the offset of the inverted index file we are writing to
                 num_docs = len(self.index[w])
+                offset = f.tell()
+
+                #normalize our weighting
                 idf = N / num_docs
 
-                offset = f.tell()
+                #write to the dicionary.txt file
                 dictionaryBuilder.insert((w, num_docs, offset))
+
+                #write to the postings.txt file
                 for x in self.index[w]:
                     f.write("{:3d} {:8.8}\n".format(x[0], str(x[1] * idf)))
 
-                    #if w=="algorithm" and x[0]==624:
-                        #print("{:3d} {:8.8}\n".format(x[0], str(x[1] * idf)))
-
         dictionaryBuilder.writeFile(filepath=os.path.join(outputDir, "dictionary.txt"))
-        dictionaryBuilder.getStopwords()
 
-        #write out the mappings file
+        # uncomment this to print out a list of the most common words to build the Stopwords file from
+        # dictionaryBuilder.getStopwords()
+
+        # write out the mappings file
         with open( os.path.join(outputDir, "mappings.txt"), "w") as f:
             for w in self.mappings:
                 f.write("{:3.3} {:64.64}\n".format(str(w[0]), str(w[1])))

@@ -1,22 +1,27 @@
 
 class DictionaryHandler:
+    '''
+    Class that handles both writing a dictionary from memory to file
+    and for opening and reading from an existing dictionary file
+    '''
 
     def __init__(self):
         self.line_length = 26
         self.threshold = 2
         self.stopwords = {}
 
+    #Call this function when we want to use this class for writing a dictionary
     def build(self, size):
-        self.size = int(size * 1.1)
+        self.size = int(size * 0.6 )
         self.dictionary = {}
 
-
+    #Call this function when we want to read from an already existing dictionary file
     def openFile(self, filepath):
         self.filepath = filepath
 
-        #determine the number of entries in the dictionary file
+        #determine the number of entries in the dictionary file to correctly set self.size for hashing modulo size
         self.file = open(filepath, "r+")
-        self.file.seek(0,2)
+        self.file.seek(0, 2)
         self.size = int(self.file.tell() / self.line_length)
 
     def hash(self, token, i=0):
@@ -26,11 +31,6 @@ class DictionaryHandler:
         #filter out words with low frequencies
         if value[1] < self.threshold:
             return
-
-        ''' This block can be uncommented to obtain the stopwords, and calling getStopWords() after writing the dictionary
-            if value[1] > 300:
-                self.stopwords[value[1]] = value[0]
-        '''
 
         #insert into the hash table
         write = False
@@ -46,28 +46,29 @@ class DictionaryHandler:
         if not write:
             print("Dictionary is full")
 
-    def getPosting(self, token):
+
+    def getEntry(self, token):
+        '''
+        Searches the Dictionary file for the Dictionary Entry corresponding to a Token
+        :param token: a token to search the dictionary for
+        :return: (token, num_docs, posting_offset) or None if token is not in the Dictionary
+        '''
         read = False
         i = 0
         while (not read) and (i < self.size):
-            h = self.hash(token, i) * self.line_length
-            self.file.seek(h)
+            offset = self.hash(token, i) * self.line_length
+            self.file.seek(offset)
             line = self.file.readline()
-            if line[0:12] == "{:12.12}".format(token):
+
+            if "{:12.12}".format(line) == "{:12.12}".format(token):  # format the token the same way we did when writing to the dictionary
                 posting = line.split()
                 return posting[0], int(posting[1]), int(posting[2])
-            else:
+
+            else:  # linear probe through the dictionary
                 i = i+1
 
         if not read:
             print("Record not found")
-
-    '''
-    Method used to obtain the most frequent words in our dictionary
-    '''
-    def getStopwords(self):
-        for w in sorted(self.stopwords, reverse=True):
-            print("\"{}\", ".format(self.stopwords[w]))
 
 
     def writeFile(self, filepath):

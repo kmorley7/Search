@@ -19,16 +19,18 @@ if __name__ == "__main__":
     lexer.build()
     tokens = lexer.tokenize(words)
 
-    #The dictionary
+    # Open the dictionary file for reading from
     dictionary = DictionaryHandler()
     dictionary.openFile("output/dictionary.txt")
 
     accumulator = {}
+
+    # Query processing algorithm
     for token in tokens:
         if token in Stopwords:
             break
 
-        w, num_docs, offset = dictionary.getPosting(token)
+        w, num_docs, offset = dictionary.getEntry(token)
 
         if w is not None:  # w is None when the token does not exist in the dictionary
             with open("output/postings.txt", "r") as f:
@@ -37,9 +39,10 @@ if __name__ == "__main__":
                 for i in range(num_docs):
                     doc_id, wt = f.readline().split()
 
+                    # add the weight to the accumulator
                     if int(doc_id) in accumulator.keys():
                         accumulator[int(doc_id)] = accumulator[int(doc_id)] + float(wt)
-                    else:
+                    else:  # for the first time we come across the document, we must initialize the value of accumulator
                         accumulator[int(doc_id)] = float(wt)
 
     # Sort the accumulator

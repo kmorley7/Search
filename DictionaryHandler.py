@@ -15,9 +15,9 @@ class DictionaryHandler:
         self.filepath = filepath
 
         #determine the number of entries in the dictionary file
-        with open(filepath, "r+") as f:
-            f.seek(0,2)
-            self.size = int(f.tell() / self.line_length)
+        self.file = open(filepath, "r+")
+        self.file.seek(0,2)
+        self.size = int(self.file.tell() / self.line_length)
 
     def hash(self, token, i=0):
         return (hash(token) + i) % self.size
@@ -47,21 +47,20 @@ class DictionaryHandler:
             print("Dictionary is full")
 
     def getPosting(self, token):
-        with open(self.filepath, "r+") as f:
-            read = False
-            i = 0
-            while not read and i < self.size:
-                h = self.hash(token, i) * self.line_length
-                f.seek(h)
-                line = f.readline()
-                if line[0:12] == "{:12.12}".format(token):
-                    posting = line.split()
-                    return posting[0], int(posting[1]), int(posting[2])
-                else:
-                    i = i+1
+        read = False
+        i = 0
+        while (not read) and (i < self.size):
+            h = self.hash(token, i) * self.line_length
+            self.file.seek(h)
+            line = self.file.readline()
+            if line[0:12] == "{:12.12}".format(token):
+                posting = line.split()
+                return posting[0], int(posting[1]), int(posting[2])
+            else:
+                i = i+1
 
-            if not read:
-                print("Record not found")
+        if not read:
+            print("Record not found")
 
     '''
     Method used to obtain the most frequent words in our dictionary

@@ -2,6 +2,7 @@ import sys
 import time
 from HTMLLexer import HTMLLexer
 from DictionaryHandler import DictionaryHandler
+from Stopwords import Stopwords
 
 
 if __name__ == "__main__":
@@ -24,6 +25,9 @@ if __name__ == "__main__":
 
     accumulator = {}
     for token in tokens:
+        if token in Stopwords:
+            break
+
         w, num_docs, offset = dictionary.getPosting(token)
 
         if w is not None:  # w is None when the token does not exist in the dictionary
@@ -45,6 +49,9 @@ if __name__ == "__main__":
         if accumulator[i] > 0:
             results.append(i)
             weights.append(accumulator[i])
+
+    if len(results) == 0:
+        print("No files found.")
 
     # display the top 10 documents
     with open("output/mappings.txt", "r") as f:

@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     # Open the dictionary file for reading from
     dictionary = DictionaryHandler()
-    dictionary.openFile("output/dictionary.txt")
+    dictionary.openFile("/home/kem021/Info/Tokenizer/output/dictionary.txt")
 
     accumulator = {}
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         w, num_docs, offset = dictionary.getEntry(token)
 
         if w is not None:  # w is None when the token does not exist in the dictionary
-            with open("output/postings.txt", "r") as f:
+            with open("/home/kem021/Info/Tokenizer/output/postings.txt", "r") as f:
                 f.seek(offset)
 
                 for i in range(num_docs):
@@ -55,17 +55,16 @@ if __name__ == "__main__":
 
     if len(results) == 0:
         print("No files found.")
-
-    # display the top 10 documents
-    with open("output/mappings.txt", "r") as f:
-        for i in range(10):
-            if i >= len(results):
-                break
-
-            file_number = results[i]
-            f.seek((file_number-1)*69)
-            print("{}: {} {} {}".format(i+1, results[i], f.readline()[4:68].strip(), weights[i]))
-
+        quit()
 
     end = time.time()
-    print("Ran in {:f} seconds.".format(end-start))
+    print("Found {} results in {:f} seconds.".format(len(results), end-start))
+
+
+    # display the top 10 documents
+    with open("/home/kem021/Info/Tokenizer/output/mappings.txt", "r") as f:
+        for i in results:
+            f.seek((i-1)*69)
+            print("http://www.csce.uark.edu/~sgauch/{}".format(f.readline()[29:68].strip()))
+
+
